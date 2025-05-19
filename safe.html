@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSphere - Safety Reviews & Contacts</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>SafeSphere</span>
+            </div>
+        </div>
+        <nav id="mobileNav" class="mobile-nav">
+            <ul>
+                <li><a href="#" onclick="showSection('menuSection')"><i class="fas fa-home"></i> Home</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container" id="menuSection">
+        <div class="hero">
+            <h1>Welcome to SafeSphere</h1>
+            <p>Your trusted platform for safety reviews and community insights.You can share your experience and give ratings for the place you have visted ,so that it might be helpful for others.</p>
+        </div>
+        
+        <div class="card-grid">
+            <div class="card" onclick="showSection('profileSection')">
+                <i class="fas fa-user-circle"></i>
+                <h3>Personal Details</h3>
+                <p>Manage your profile and favorite contacts</p>
+            </div>
+            
+            <div class="card" onclick="showSection('searchSection')">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Search Reviews</h3>
+                <p>Find safety information about any location</p>
+            </div>
+            
+            <div class="card" onclick="showSection('reviewSection')">
+                <i class="fas fa-star"></i>
+                <h3>Post Review</h3>
+                <p>Share your experience to help others</p>
+            </div>
+        </div>
+        
+        <div class="recent-reviews">
+            <h2>Recent Safety Reviews</h2>
+            <div id="recentReviewsList"></div>
+        </div>
+    </div>
+
+    <!-- Personal Details Section -->
+    <div class="container hidden" id="profileSection">
+        <h2><i class="fas fa-user-circle"></i> My Profile</h2>
+        <div class="form-container">
+            <div class="form-group">
+                <label for="nameInput">Full Name</label>
+                <input type="text" id="nameInput" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+                <label for="emailInput">Email Address</label>
+                <input type="email" id="emailInput" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="phoneInput">Phone Number</label>
+                <input type="tel" id="phoneInput" placeholder="Enter your phone number" required>
+            </div>
+            <button onclick="registerUser()" class="btn-primary"><i class="fas fa-save"></i> Save Details</button>
+            <button onclick="showSection('menuSection')" class="btn-secondary">Cancel</button>
+        </div>
+        
+        <div class="contacts-section">
+            <h3><i class="fas fa-address-book"></i> Favorite Contacts</h3>
+            <button onclick="accessContacts()" class="btn-secondary"><i class="fas fa-sync"></i> Access Contacts</button>
+           
+            
+            <!-- This is where the favorite contacts will be displayed -->
+            <h3>Your Favorite Contacts</h3>
+            <div id="favoriteContactsList" class="favorite-contacts-list"></div>
+        </div>
+    </div>
+    
+    <!-- Search Section -->
+    <div class="container hidden" id="searchSection">
+        <h2><i class="fas fa-search"></i> Search Safety Reviews</h2>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for a location">
+            <button onclick="searchReviews()" class="btn-primary"><i class="fas fa-search"></i></button>
+        </div>
+        <div id="searchResults" class="results-container"></div>
+    </div>
+    
+    <!-- Review Section -->
+    <div class="container hidden" id="reviewSection">
+        <h2><i class="fas fa-pen"></i> Share Your Safety Experience</h2>
+        <div class="form-container">
+            <div class="form-group">
+                <label for="locationInput">Location Name</label>
+                <input type="text" id="locationInput" placeholder="Enter the location name" required>
+            </div>
+            <div class="form-group">
+                <label for="reviewInput">Your Experience</label>
+                <textarea id="reviewInput" rows="5" placeholder="Describe your safety experience at this location..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="ratingInput">Safety Rating</label>
+                <div class="rating-select">
+                    <select id="ratingInput">
+                        <option value="1">1 - Unsafe</option>
+                        <option value="2">2 - Somewhat Safe</option>
+                        <option value="3">3 - Neutral</option>
+                        <option value="4">4 - Safe</option>
+                        <option value="5">5 - Very Safe</option>
+                    </select>
+                    <div id="ratingDisplay" class="rating-display">
+                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+            </div>
+            <button onclick="submitReview()" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Review</button>
+            <button onclick="showSection('menuSection')" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 SafeSphere - Making communities safer together</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="gesture-detection.js"></script>
+    
+    <script>
+        // Initialize global variable for mobile detection
+        window.isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Original app initialization function
+        function initializeApp() {
+            // Load initial data and set up listeners
+            loadRecentReviews();
+            
+            // Display welcome message
+            showNotification("Welcome to SafeSphere!", "info");
+        }
+        
+        // Helper function to show sections
+        function showSection(sectionId) {
+            document.querySelectorAll('.container').forEach(container => {
+                container.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+        
+        // Load recent reviews
+        function loadRecentReviews() {
+            // Placeholder - would be replaced with actual database calls
+            const reviewsContainer = document.getElementById('recentReviewsList');
+            reviewsContainer.innerHTML = '<div class="loading-indicator">Loading recent reviews...</div>';
+            
+            // Simulated data loading
+            setTimeout(() => {
+                reviewsContainer.innerHTML = `
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="location-name">Central Park</span>
+                            <div class="rating">
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <p class="review-text">Very well lit at night and security personnel visible throughout.</p>
+                        <div class="review-footer">Posted by Sarah J. • 2 days ago</div>
+                    </div>
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="location-name">Downtown Subway Station</span>
+                            <div class="rating">
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt filled"></i>
+                                <i class="fas fa-shield-alt"></i>
+                                <i class="fas fa-shield-alt"></i>
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <p class="review-text">Needs better lighting and more security cameras. Be careful late at night.</p>
+                        <div class="review-footer">Posted by Mike T. • 5 days ago</div>
+                    </div>
+                `;
+            }, 1000);
+        }
+        
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // Initialize everything when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
